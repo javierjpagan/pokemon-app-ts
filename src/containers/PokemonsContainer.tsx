@@ -1,6 +1,5 @@
-import React from 'react';
+import React, {useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@apollo/client';
-// import { useQuery } from '@apollo/react-hooks';
 import { Pokemon } from '../components/Pokemon';
 import { GET_POKEMONS } from '../graphql/get-pokemons';
 
@@ -25,11 +24,36 @@ type QueryResult = {
 };
 
 export const PokemonsContainer: React.FC = () => {
-  const { data } = useQuery<QueryResult>(GET_POKEMONS, {
-    variables: { first: 9 },
+  const [limit, setLimit] = useState(9); // Step 1: Start with 9 Pokémon
+
+  const { data, fetchMore } = useQuery<QueryResult>(GET_POKEMONS, {
+    variables: { first: limit },
   });
 
   const pokemons = data?.pokemons ?? [];
+
+   // Step 2: Scroll handler
+  const handleScroll = useCallback(() => {
+    const nearBottom =
+      window.innerHeight + window.scrollY >= document.body.offsetHeight - 300;
+
+    if (nearBottom) {
+      setLimit((prev) => prev + 9); // Step 3: Load more Pokémon
+    }
+  }, []);
+
+  // Step 4: Attach scroll event listener
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
+
+  // Step 5: Fetch more Pokémon when limit increases
+  useEffect(() => {
+    fetchMore({
+      variables: { first: limit },
+    });
+  }, [limit, fetchMore]); 
 
   return (
     <div className="container">
