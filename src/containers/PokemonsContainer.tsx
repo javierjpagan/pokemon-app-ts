@@ -1,7 +1,8 @@
 import React, {useState, useEffect, useCallback } from 'react';
-import { useQuery } from '@apollo/client';
+import { useQuery, useLazyQuery } from '@apollo/client';
 import { Pokemon } from '../components/Pokemon';
 import { GET_POKEMONS } from '../graphql/get-pokemons';
+import { GET_FUZZY_POKEMON } from '../graphql/get-fuzzy-pokemon';
 
 type Attack = {
   name: string;
@@ -25,12 +26,16 @@ type QueryResult = {
 
 export const PokemonsContainer: React.FC = () => {
   const [limit, setLimit] = useState(9); // Step 1: Start with 9 Pokémon
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const { data, fetchMore } = useQuery<QueryResult>(GET_POKEMONS, {
+
+  const { data: listData, fetchMore } = useQuery<QueryResult>(GET_POKEMONS, {
     variables: { first: limit },
   });
 
-  const pokemons = data?.pokemons ?? [];
+  const [fetchPokemon, { data: searchData }] = useLazyQuery(GET_FUZZY_POKEMON);
+
+//   const pokemons = data?.pokemons ?? [];
 
    // Step 2: Scroll handler
   const handleScroll = useCallback(() => {
@@ -40,7 +45,7 @@ export const PokemonsContainer: React.FC = () => {
     if (nearBottom) {
       setLimit((prev) => prev + 9); // Step 3: Load more Pokémon
     }
-  }, []);
+  }, [searchTerm]);
 
   // Step 4: Attach scroll event listener
   useEffect(() => {
@@ -53,13 +58,38 @@ export const PokemonsContainer: React.FC = () => {
     fetchMore({
       variables: { first: limit },
     });
-  }, [limit, fetchMore]); 
+  }, [limit, fetchMore, searchTerm]); 
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+  
+    if (value.length >= 2) {
+      fetchPokemon({ variables: { pokemon: value } });
+    }
+  };
+
+  const pokemonsToDisplay: PokemonType[] = searchTerm
+    ? searchData?.getFuzzyPokemon ?? []
+    : listData?.pokemons ?? [];
 
   return (
+    <>
+    <div className="search-bar" style={{ padding: '20px', textAlign: 'center'}}>
+  <input
+    type="text"
+    placeholder="Search Pokémon"
+    value={searchTerm}
+    onChange={handleSearch}
+    style={{ padding: '10px', fontSize: '16px', width: '300px' }}
+  />
+</div>
+
     <div className="container">
-      {pokemons.map((pokemon) => (
+      {pokemonsToDisplay.map((pokemon) => (
         <Pokemon key={pokemon.id} pokemon={pokemon} />
       ))}
     </div>
+    </>
   );
 };
