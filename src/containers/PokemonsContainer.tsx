@@ -1,8 +1,7 @@
 import React, {useState, useEffect, useCallback } from 'react';
-import { useQuery, useLazyQuery } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import { Pokemon } from '../components/Pokemon';
 import { GET_POKEMONS } from '../graphql/get-pokemons';
-import { GET_FUZZY_POKEMON } from '../graphql/get-fuzzy-pokemon';
 
 type Attack = {
   name: string;
@@ -29,13 +28,16 @@ export const PokemonsContainer: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
 
-  const { data: listData, fetchMore } = useQuery<QueryResult>(GET_POKEMONS, {
+  const { data: data, fetchMore } = useQuery<QueryResult>(GET_POKEMONS, {
     variables: { first: limit },
   });
 
-  const [fetchPokemon, { data: searchData }] = useLazyQuery(GET_FUZZY_POKEMON);
+  const pokemons = data?.pokemons ?? [];
 
-//   const pokemons = data?.pokemons ?? [];
+  const filteredPokemons = pokemons.filter((pokemon) =>
+    pokemon.name.toLowerCase().includes(searchTerm.toLowerCase())
+  ); 
+
 
    // Scroll handler
   const handleScroll = useCallback(() => {
@@ -45,7 +47,7 @@ export const PokemonsContainer: React.FC = () => {
     if (nearBottom) {
       setLimit((prev) => prev + 9); // Add 9 more Pokémon
     }
-  }, [searchTerm]);
+  }, []);
 
   // Scroll event listener
   useEffect(() => {
@@ -58,21 +60,15 @@ export const PokemonsContainer: React.FC = () => {
     fetchMore({
       variables: { first: limit },
     });
-  }, [limit, fetchMore, searchTerm]); 
+  }, [limit, fetchMore]); 
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
   
-    if (value.length >= 2) {
-      fetchPokemon({ variables: { pokemon: value } });
-    }
   };
 
-  const pokemonsToDisplay: PokemonType[] = searchTerm
-    ? searchData?.getFuzzyPokemon ?? []
-    : listData?.pokemons ?? [];
-
+  // Render the Pokémon list
   return (
     <>
     <div className="search-bar" style={{ padding: '20px', textAlign: 'center'}}>
@@ -86,9 +82,9 @@ export const PokemonsContainer: React.FC = () => {
 </div>
 
     <div className="container">
-      {pokemonsToDisplay.map((pokemon) => (
-        <Pokemon key={pokemon.id} pokemon={pokemon} />
-      ))}
+    {filteredPokemons.map((pokemon) => (
+  <Pokemon key={pokemon.id} pokemon={pokemon} />
+))}
     </div>
     </>
   );
