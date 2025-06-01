@@ -25,7 +25,7 @@ type QueryResult = {
 };
 
 export const PokemonsContainer: React.FC = () => {
-  const [limit, setLimit] = useState(9); // Step 1: Start with 9 Pokémon
+  const [limit, setLimit] = useState(9); // Load 9 Pokémon
   const [searchTerm, setSearchTerm] = useState('');
 
 
@@ -37,23 +37,23 @@ export const PokemonsContainer: React.FC = () => {
 
 //   const pokemons = data?.pokemons ?? [];
 
-   // Step 2: Scroll handler
+   // Scroll handler
   const handleScroll = useCallback(() => {
     const nearBottom =
       window.innerHeight + window.scrollY >= document.body.offsetHeight - 300;
 
     if (nearBottom) {
-      setLimit((prev) => prev + 9); // Step 3: Load more Pokémon
+      setLimit((prev) => prev + 9); // Add 9 more Pokémon
     }
   }, [searchTerm]);
 
-  // Step 4: Attach scroll event listener
+  // Scroll event listener
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
-  // Step 5: Fetch more Pokémon when limit increases
+  // Fetch more Pokémon when limit increases
   useEffect(() => {
     fetchMore({
       variables: { first: limit },
