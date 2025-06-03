@@ -25,7 +25,7 @@ type QueryResult = {
 
 export const PokemonsContainer: React.FC = () => {
   const [limit, setLimit] = useState(9); // Load 9 Pokémon
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(''); //Store Search value
 
 
   const { data: data, fetchMore } = useQuery<QueryResult>(GET_POKEMONS, {
